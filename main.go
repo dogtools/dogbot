@@ -17,7 +17,7 @@ var (
 	apiKey      string
 	botID       string
 	dogfilePath string
-	d           dog.Dogfile
+	dogfile     dog.Dogfile
 )
 
 func main() {
@@ -34,7 +34,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	err := d.ParseFromDisk(dogfilePath)
+	var err error
+	dogfile, err = dog.ParseFromDisk(dogfilePath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -73,22 +74,21 @@ func handleMessageEvent(rtm *slack.RTM, msg slack.RTMEvent) {
 				case "list":
 					// print list of tasks
 					taskList := "I can run any of the following tasks, just ask me typing `@dobgot taskname`\n"
-					for _, t := range d.Tasks {
+					for _, t := range dogfile.Tasks {
 						taskList += fmt.Sprintf("• *%s*: _%s_\n", t.Name, t.Description)
 					}
 					rtm.SendMessage(rtm.NewOutgoingMessage(taskList, ev.Channel))
 
 				default:
 					taskName := parts[1]
-					var tc dog.TaskChain
-					err := tc.Generate(d, taskName)
+					taskChain, err := dog.NewTaskChain(dogfile, taskName)
 					if err != nil {
 						rtm.SendMessage(rtm.NewOutgoingMessage(err.Error(), ev.Channel))
 						break
 					}
 
 					startTime := time.Now()
-					err = tc.Run(os.Stdout, os.Stderr)
+					err = taskChain.Run(os.Stdout, os.Stderr)
 					if err != nil {
 						rtm.SendMessage(rtm.NewOutgoingMessage(err.Error(), ev.Channel))
 						break
