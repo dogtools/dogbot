@@ -17,7 +17,7 @@ var (
 	apiKey      string
 	botID       string
 	dogfilePath string
-	dogfile     dog.Dogfile
+	dogfile     dog.Dogtasks
 )
 
 func main() {
